@@ -1,0 +1,582 @@
+<!DOCTYPE HTML> 
+<html lang="en"> 
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <title>HTML5 Query Builder</title>
+		
+		<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+
+		
+        <!-- jquery -->
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" id="theme">
+		<style id="UI-sizeFix"  type="text/css">.ui-widget{ font-size:0.8em; } input.ui-button{ padding: 0.2em 1em; }</style>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+
+		<!--JSTREE-->
+		<link rel="stylesheet" href="js/jstreeTheme/style.min.css" />
+		<script src="js/jstree.min.js"></script>
+		
+		<!--JSPlumb-->
+		<script src="js/jquery.jsPlumb-1.6.2-min.js"></script>	
+		
+		
+		<!--jquery.layout-->
+		<script src="js/jquery.layout-latest.min.js"></script>
+		<link rel="stylesheet" href="css/layout-default-latest.css" />
+
+		<link rel="stylesheet" href="js/tablethemes/blue/style.css" type="text/css" />
+
+		<!--jquery.dragtable-->
+		<script src="js/jquery.dragtable.js"></script>
+		<link rel="stylesheet" href="css/dragtable-default.css" type="text/css" />
+
+		<!--jquery.dropit -->
+		<script src="js/dropit.js"></script>
+		
+		
+		<link href="css/demo.css" rel="stylesheet">
+    </head>
+    <body>
+
+		
+<script>
+	var schemaJsonCall = "tables.json";
+	var tableSchemaJsonCall = "rawData.json";
+	var tableSchema;
+	var tabledata;
+	
+	var jtree;
+	var treetypes = {
+			"table" : {"icon" : "fa fa-table"},
+			"default" : {"icon" : "fa fa-columns"},
+			"col" : {"icon" : "fa fa-columns"},
+			"date" : {"icon" : "fa fa-calendar"},
+			"string" : {"icon" : "fa fa-font"},
+			"int" : {"icon" : "fa fa-list-ol"},
+			"key" : {"icon" : "fa fa-key"}
+		};
+
+		
+	$(function () { 
+		$(document).bind('mousedown selectstart', function(e) {
+			return $(e.target).is('input, textarea, select, option, html');
+		});
+		buildTable();
+		$('body').layout({ applyDefaultStyles: false
+		,	west__togglerLength_closed: '100%'
+		,	west__spacing_closed:		20
+		,	south__togglerLength_closed: '100%'
+		,	south__spacing_closed:		20
+		,	east__togglerLength_closed: '100%'
+		,	east__spacing_closed:		20		
+		});
+		$.getJSON( schemaJsonCall, function( data ) {
+			 tableSchema = data;
+			var htmlString ="";
+			$.each( data, function( key, val ) {
+				htmlString+=createTreeString(key);
+		});
+		jtree =  createTree(htmlString,$('#jstree'), [ "dnd","search","types","html_data","state"  ],true);
+			$(document)
+				.on('dnd_move.vakata', function (e, data) {
+					var t = $(data.event.target);
+					if(!t.closest('.jstree').length) {
+						if(t.closest('.drop').length && $(data.element.parentNode).hasClass('datatable')) {
+							data.helper.find('.jstree-icon').removeClass('jstree-er').addClass('jstree-ok');
+						}
+						else {
+							data.helper.find('.jstree-icon').removeClass('jstree-ok').addClass('jstree-er');
+						}
+					}
+				})
+				.on('dnd_stop.vakata', function (e, data) {
+					var t = $(data.event.target);
+					if(!t.closest('.jstree').length) {
+						if(t.closest('.drop').length) {
+						if($(data.element.parentNode).hasClass('datatable')){
+						createNode($(data.element).text(),data.event.clientX-$('.tableList').width(),data.event.clientY,data);
+							//$(data.element).clone().appendTo(t.closest('.drop'));
+							// node data: 
+							// if(data.data.jstree && data.data.origin) { console.log(data.data.origin.get_node(data.element); }
+							}
+						}
+					}
+				});
+		});
+
+	  var to = false;
+	  $('#searchnodes').keyup(function () {
+		if(to) { clearTimeout(to); }
+		to = setTimeout(function () {
+		  var v = $('#searchnodes').val();
+		  $('#jstree').jstree(true).search(v);
+		}, 250);
+	  });
+	  
+	  
+	  
+	 $("body").click(function(){
+		updateSql();
+		//$(".colddmenu").hide();
+	 });
+	});  
+
+	function createCol(node,name,type,select){
+		var key =getNextCol(node.id);
+		if (!select) select = name;
+		var newNode = { state: "open",type:type, data: {"type":type, "select":select},id:key,text: name+" ("+type+")"};
+		var parentNode = $("#"+node.parent);
+		if(!parentNode.hasClass("tableNode"))
+			parentNode = parentNode.parents(".tableNode").first();
+		parentNode.jstree().create_node("#"+node.parent,newNode);
+	}
+	
+	function getNextCol(selector){
+		var i=0;
+		var ret = selector;
+		while ($("#"+ret).length){
+			ret = selector + "_" +i;
+			i++;
+		}
+		return ret;
+	}
+	
+	function getNextSelector(selector){
+		var i=0;
+		var ret = selector;
+		while ($("#"+ret).length){
+			ret =i+""+selector;
+			i++;
+		}
+		return ret;
+	}
+	
+	function customMenu(node) {
+		var coltitle = node.id.substring(node.id.lastIndexOf("XX")+2);
+		var tableName = node.parent;
+		var colname = tableName + "." + coltitle;
+		// The default set of all items
+		var items = {};
+		
+		if(node.type=="date"){
+			items["Year"] = {
+				label: "Year",action: function () {createCol(node,coltitle+"_year","int","year("+colname+")")}
+			};
+			items["Month"] = {
+				label: "Month",action: function () {createCol(node,coltitle+"_month","int","month("+colname+")")}
+			};
+			items["Day"] = {
+				label: "Day",action: function () {createCol(node,coltitle+"_day","int","day("+colname+")")}
+			};
+			items["Year/Month"] = {
+				label: "Year/Month",action: function () {createCol(node,coltitle+"_ym","string",
+					"cast(year("+colname+") as varchar)+'/'+cast(month("+colname+") as varchar)")}
+			};
+			items["Year/Month/Day"] = {
+				label: "Year/Month/Day",action: function () {createCol(node,coltitle+"_ymd","string",
+					"cast(year("+colname+") as varchar)+'/'+cast(month("+colname+") as varchar)+'/'+cast(day("+colname+") as varchar)")}
+			};
+		}else if(node.type=="string"){
+			items["Concat"] = {
+				label: "Concat",action: function () {createCol(node,colname,"int")}
+			};
+		}
+		return items;
+	}
+	
+	
+	function getColumn(type,name,id){
+			return "<li data-jstree='{\"type\":\"" + type + "\",\"select\":\""+name+"\"}' id='" + id + "'>" + name + " (" + type + ")</li>"
+	}
+	
+	function createTreeString(tableName,target,plugins,key){
+			var items = [];
+			var cols = [];
+			if(!key)
+				key =getNextSelector(tableName);
+			var i = 0;
+			
+			var val= tableSchema[tableName];
+			$.each( val.columns, function( i,col ) {
+				cols.push(getColumn(col.type,col.name,key + "XX" + col.name));
+				//cols.push( "<li data-jstree='{\"type\":\"" + col.type + "\"}' id='" + key + "XX" + col.name + "'>" + col.name + " (" + col.type + ")</li>" );
+			});
+			var colString = "";
+			if(cols.length > 0)
+				colString = "<ul>" +  cols.join( "" ) +  "</ul>";
+			items.push( "<li data-jstree='{\"type\":\"table\" }' class='datatable' id='" + key + "'><i class='fa fa-table'></i>" + tableName + colString + "</li>" );
+			
+			var htmlString = items.join( "" );
+			if(target)
+				createTree(htmlString,target,plugins)
+			return htmlString;
+	}
+		
+	function createTree(htmlString,target,plugins,preventAdds){
+			if(!plugins)
+			plugins =  [ "types","html_data","checkbox","contextmenu","crrm"  ];
+			var core = {};
+			if(!preventAdds) core = {'check_callback' : true }
+			$( "<ul/>", {
+				"class": "my-new-list",
+				html: htmlString
+			}).appendTo(target);
+			return target.jstree({
+				'core' : core,
+				"checkbox" : {"keep_selected_style" : false},
+				"types" : treetypes,
+				contextmenu: {items: customMenu},
+				"search" : { "show_only_matches" : true},
+				"plugins" :plugins
+			});
+		}	
+	
+	function updateSql(){
+		
+		//$.cookie('layout_'+document.URL,$(".dropzone").html());
+		$(".sql").html(buildSql().replace(/(?:\r\n|\r|\n)/g, '<br />'));
+	}
+
+	function buildTable(){
+		$.getJSON( tableSchemaJsonCall, function( data ) {
+			$("table.tablesorter thead tr").empty();
+			$("table.tablesorter tbody").empty();
+			tabledata = data;
+			var htmlString ="";
+			$.each( data.columns, function( i, col ) {
+				var th = $("<th>");
+				th.text(col.name);
+				th.attr("colType",col.type);
+				$("table.tablesorter thead tr").append(th);
+			});
+			$.each( data.rows, function( i, row ) {
+				var tr = $("<tr>");
+				$.each( row, function( key, val) {
+					$("<td>").text(val).appendTo(tr);
+				});
+				$("table.tablesorter tbody").append(tr);
+			});			
+			$(".tablesorter th").each(function(index,column){
+				$(this).prepend("<span class='dragtable-drag-handle'>&nbsp;</span>");
+				var colmenuID = "colmenu"+index;
+				var colmnu = $("#colmenu").clone().attr("id",colmenuID);
+				var btn = colmnu.children().first();
+				var menu = btn.next();
+				menu.menu();
+
+				
+				btn.button({
+					icons: {primary: 'ui-icon-triangle-1-s'},
+					text: false
+				}).click(function(){
+					//menu.slideToggle();
+					$(".colddmenu").not(menu).hide();
+					menu.css("top","-500px").css("left","-500px")
+					menu.slideToggle("fast");
+					menu.position({
+						 'my':'right top', 
+						 'at':'right bottom', 
+						 'of':$(this),
+						 'collision':'fit flip',
+						 'within': $(".dataPreview")
+					});
+				});
+				$(this).append(colmnu);
+			});
+			
+			//$('.colmenu1').menu();   //dropit({ action: 'mouseenter' });
+			$(".tablesorter").dragtable({
+				placeholder: 'dragtable-col-placeholder test3',
+				items: 'thead th:not( .notdraggable ):not( :has( .dragtable-drag-handle ) ), .dragtable-drag-handle',
+				appendTarget: $(".tablesorter"),
+				scroll: true
+			});
+		});		
+	}
+	
+</script>
+		
+<script>
+
+	Array.prototype.remove = function(v) { this.splice(this.indexOf(v) == -1 ? this.length : this.indexOf(v), 1); }
+	
+	var instance = null;
+	function createInstace(){
+		if(!instance){
+			instance = jsPlumb.getInstance({
+			Endpoint : ["Dot", {radius:4}],
+			HoverPaintStyle : {strokeStyle:"#1e8151", lineWidth:2 },
+			ConnectionOverlays : [
+				[ "Arrow", { 
+					location:0,
+					id:"arrow",
+					length:14,
+					foldback:0.1
+				} ],
+				[ "Label", { label:"Join", id:"label", cssClass:"aLabel" }]
+			],
+			connector:[ "Flowchart", { cornerRadius:10 } ],
+			anchors:["Center", "Center"],  			
+			Container:"dropzone"
+			});
+			instance.bind("click", function(c) { 
+				instance.detach(c); 
+				updateSql();
+			});		
+			instance.bind("connection", function(info) {
+				if(!info.connection.getOverlay("label2")){
+					var parent = $(info.source).jstree().get_json()[0].text;
+					var child = $(info.target).jstree().get_json()[0].text;
+					var div = $("#joindlg") ;
+					var s = div.find("#joindlg_sourcedd")
+					s.find('option').remove();
+					$.each( $(info.source).jstree().get_json()[0].children, function( index, val ) {
+						$('<option />', {text: val.data.jstree.select }).appendTo(s);
+					});
+					div.find("#joindlg_dest").text(child);
+					div.find("#joindlg_source").text(parent);
+					s = div.find("#joindlg_destdd");
+					s.find('option').remove();
+					$.each( $(info.target).jstree().get_json()[0].children, function( index, val ) {
+						$('<option />', {text: val.data.jstree.select }).appendTo(s);
+					});
+					$( div ).dialog({
+						  resizable: false,
+						  modal: true,
+						  buttons: {
+							"Join": function() {
+								var joinOverlays = getJoin(parent,$(this).find("select").first().val(),child,$(this).find("select").last().val());
+								for (var i = 0; i < joinOverlays.length; i++)
+									info.connection.addOverlay(joinOverlays[i]);
+								updateSql();
+							  $( this ).dialog( "close" );
+							},
+							Cancel: function() {
+							  instance.detach(info.connection);
+							  $( this ).dialog( "close" );
+							}
+						  }
+						});
+					
+				}
+			});
+		}
+	}
+
+	function buildSql(){
+		var sql ="";
+		var columns = "";
+		tblList = [];
+		
+		$(".drop").find(".w").each(function(){
+			var sqltable =$(this).attr("tableName");
+			var table =$(this).attr("id");
+			var cols = $(this).jstree('get_selected');
+			tblList.push(table);
+			for (var i = 0; i < cols.length; i++) {
+				var c=cols[i];
+				if(c!=table){
+					var select = c;
+					var colname = c;
+					if($(this).jstree().get_node(c).data.jstree)
+						select = $(this).jstree().get_node(c).data.jstree.select;
+					else
+						select = $(this).jstree().get_node(c).data.select;
+					columns += ","+select.replace(table,table.replace("XX","_")) + " as " + colname;
+					//$("#"+c).data()
+				}
+			}
+		});
+		
+		tblList.sort(function(a,b){
+			var ctA = instance.getConnections({target:a}).length;
+			var ctB = instance.getConnections({target:b}).length;
+			if (ctA == ctB) { return 0; }
+			//sort descending
+			if (ctA < ctB) return 1; 
+			else return -1; 
+		});
+		
+		if(tblList.length>0){
+			var tblid = tblList[0];
+			sql += buildJoin(tblList[0],getTableStr(tblid));
+		}
+		while(tblList.length>0){
+			var tblid = tblList[0];
+			sql += buildJoin(tblid,",\n"+getTableStr(tblid))
+		}
+
+		if(columns=="") columns=" * "
+		sql = "select " + columns.substring(1) + " \nfrom \n" + sql;
+		sql = sql.replace(/XX/g,".");
+		console.log(sql)
+		return sql;
+	}
+	
+	var tblList = [];
+	
+	function buildJoin(tblid,startingStr){
+		var joinsql = "";
+		if(!startingStr)startingStr="";
+		joinsql += startingStr +" ";
+		tblList.remove(tblid);
+		var conns = instance.getConnections({target:tblid});
+
+		for (var i = 0; i < conns.length; i++) {
+			var c=conns[i];
+			if($.inArray(c.sourceId, tblList) > -1){
+				tblList.remove(c.sourceId);
+				if(c.getOverlay("joinType")){
+					var joinType = c.getOverlay("joinType").labelText;
+					var joinCols = c.getOverlay("label2").labelText;
+					joinsql += " \n " + joinType + " " + getTableStr(c.sourceId) + " on " + joinCols.replace("XX","_") + " ";
+					joinsql += buildJoin(c.sourceId);
+				}
+			}
+		}
+		if(!joinsql) joinsql = "";
+		return joinsql;
+	}
+	
+	function getTableStr(tblid){
+		var sqltable =$("#"+tblid).attr("tableName");
+		return sqltable + " as " + tblid.replace("XX","_")
+	}
+	
+	function createNode(tableName,clientX,clientY,data){
+		createInstace()
+		$(data.element).clone().appendTo('.drop');
+		var div = $("<div class='tableNode w'>" +tableName+ "</div>")
+		var tableKey = getNextSelector(tableName);
+		createTreeString(tableName,div,null,tableKey);
+		div.appendTo('.drop');
+		div.attr("tableName",tableName)
+		instance.draggable(div);
+		div.resizable({resize: function( event, ui ) {instance.repaintEverything();}}).css('top', clientY+'px').css('left', clientX+'px');
+		var i = 0;
+		div.attr("id",tableKey)
+		div.addClass("tbl_"+tableName);
+		div.append($("<div class='ep'>"));
+
+		$("<span style='position:absolute;' class='ui-icon ui-icon-closethick closeButton'></span>").button().click(
+			function(){
+				instance.detachAllConnections(div);
+				div.remove();
+			}
+		).appendTo(div)
+
+		instance.makeSource(div, {
+			filter:".ep",
+			anchor:"Continuous",
+			connector:[ "Flowchart", { curviness:20 } ],
+			connectorStyle:{ strokeStyle:"#5c96bc", lineWidth:2, outlineColor:"transparent", outlineWidth:4 },
+			maxConnections:5,
+			onMaxConnections:function(info, e) {
+				alert("Maximum connections (" + info.maxConnections + ") reached");
+			}
+		});		
+		instance.makeTarget(div, {
+			dropOptions:{ hoverClass:"dragHover" },
+			anchor:"Continuous"				
+		});
+		
+		if(tableSchema[tableName].relations){
+			$.each( tableSchema[tableName].relations, function( i,rel ) {
+				$(".tbl_"+rel.table).each(function() {
+					join(div, rel.parent_cols[0],$(this),rel.child_cols[0]);
+				});		
+			});
+		}
+		$(".w").each(function() {
+			var parentDiv = $(this);
+			if(tableSchema[$(this).attr("tablename")].relations)
+			$.each( tableSchema[$(this).attr("tablename")].relations, function( i,rel ) {
+				if(rel.table==tableName){
+					join(parentDiv,rel.child_cols[0],div, rel.parent_cols[0]);
+				}
+			})
+		})
+		updateSql();
+		jsPlumb.repaintEverything();
+	}
+	
+	function join(source, sourceCol,dest,destCol){
+					instance.connect({
+						source:source.attr("id"),
+						target:dest.attr("id"),
+								overlays : getJoin(dest.attr("id"),sourceCol,source.attr("id"),destCol),
+						join:source.attr("id")+"."+sourceCol+"="+dest.attr("id")+"."+destCol
+					});		
+	}
+	
+	function getJoin(parent,parentCol, child,childCol){
+		return [[ "Label", { label:parent+"."+parentCol+" = "+child+"."+childCol, id:"label2", cssClass:"aLabel2" }],
+		[ "Label", { label:"left outer join", id:"joinType", cssClass:"joinLabel" }]];
+	}
+	
+	
+	
+</script>
+            <!-- development area -->
+  <div class="tableList ui-layout-west">
+  search:<br/>
+  <input type="text" id="searchnodes" value class="input">
+<!--     <div class="drag" style="padding:5px; display:inline-block; background:red; border-radius:4px;">Drag me</div> -->
+    <div id="jstree" class="jstree jstree-default"></div>
+  </div>
+  
+  <div class="dropzone drop ui-layout-center"></div>
+            <!-- /development area -->
+<div class="sql ui-layout-south"><br/><br/><br/><br/></div>
+
+<div class="dataPreview ui-layout-east">
+	<table cellspacing="1" class="tablesorter">             
+		<thead><tr></tr></thead> 
+		<tbody></tbody> 
+	</table>
+</div>
+
+
+<!-- /Dialogue area -->
+<div style="display:none">
+	<div id="joindlg">
+		Please select join columns <br><br>
+		<div class="floatDiv"><span id="joindlg_source"></span><br>
+		<select id="joindlg_sourcedd">
+		</select>
+		</div>
+		<div class="floatDiv" style="float: left;">join</div>
+		<div class="floatDiv"><span id="joindlg_dest"></span>
+		<br><select id="joindlg_destdd"></select>
+		</div>
+	</div>
+
+	<div id="concatdlg">
+		String builder: <br>
+		<input type="text" id="strtxt"><br/>
+		Add column from table:
+		<br><select id="strtblname"></select>
+		<br><select id="strtblcols"></select>
+	</div>
+	
+	
+	<div id="colmenu" class="menugrp" >
+		<button class="colmenubtn">Column Functions</button>
+        <ul class="colddmenu">
+            <li><a href="#">Sort Ascending</a></li>
+			<li><a href="#">Sort Descending</a></li>
+            <li><a colwrap="group" href="#">Group this column</a></li>
+			<li><a colwrap="count" href="#">Count</a></li>
+			<li><a colwrap="sum" href="#">Sum</a></li>
+			<li><a colwrap="avg" href="#">Average</a></li>
+			<li><a colwrap="min" href="#">Minimum</a></li>
+            <li><a colwrap="max" href="#">Maximum</a></li>
+			<li><a colwrap="rem" href="#">Remove</a></li>
+        </ul>
+		
+	</div>
+</div>
+
+    </body>
+</html> 

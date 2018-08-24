@@ -1,0 +1,43 @@
+{
+	"users": {
+		"description": "",
+		"columns":[
+			{"name":"id","type":"int"},
+			{"name":"username","type":"string"},
+			{"name":"fname","type":"string"},
+			{"name":"lname","type":"string"},
+			{"name":"dept_id","type":"int"},
+			{"name":"dateCreated","type":"date"}
+		],
+		"keys":["id"],
+		"relations":[
+			{"table":"department","child_cols":["dept_id"],"parent_cols":["id"]}
+		]		
+	},
+	"workorders": {
+		"description": "",
+		"columns":[
+			{"name":"id","type":"int"},
+			{"name":"user_id","type":"int"},
+			{"name":"dept_id","type":"int"},	
+			{"name":"hours","type":"float"},			
+			{"name":"name","type":"string"},
+			{"name":"dateCreated","type":"date"}
+		],
+		"keys":["id"],
+		"relations":[
+			{"table":"users","child_cols":["user_id"],"parent_cols":["id"]},
+			{"table":"department","child_cols":["dept_id"],"parent_cols":["id"]}
+		]
+	},
+	"department": {
+		"description": "",
+		"columns":[
+			{"name":"id","type":"int"},
+			{"name":"name","type":"string"},
+			{"name":"Description","type":"string"},
+			{"name":"dateCreated","type":"date"}
+		],
+		"keys":["id"]
+	}	
+}

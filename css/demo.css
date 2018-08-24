@@ -1,0 +1,292 @@
+            body,html { padding: 0px; margin:0px; color:#333; font: normal 12px sans-serif; }
+            .clear { clear: both; }
+.closeButton{
+	position: absolute !important;
+	top: 4px;
+	right: 4px;
+}
+.tableList {
+	position: fixed;
+	top: 0px;
+	left:0px;
+	/*overflow: scroll;*/
+	width: 20%;
+	height: 100%;
+}
+.dropzone{
+	position: fixed;
+	top: 0px;
+	right:0px;
+	padding-top:15px;
+	overflow: auto;
+	width: 80%;
+	height: 100%;
+}
+.tableNode {
+    border:1px solid black;
+    position:absolute !important;
+    width:230px;
+    height:150px;
+    padding: 0.5em;
+    z-index:1;
+    border-radius:0.5em;
+    box-shadow: 2px 2px 19px #aaa;
+    background: white;
+	overflow: hidden;
+}
+.tableNode .jstree-container-ul{
+height:100%;
+overflow:auto;
+}
+.floatDiv{
+float:left;
+padding: 5px;
+}
+
+.w { 	
+	position:absolute;
+	border: 1px solid black;
+	z-index:4;
+	border-radius:1em;
+	border:1px solid #2e6f9a;
+	box-shadow: 2px 2px 19px #e0e0e0;
+	-o-box-shadow: 2px 2px 19px #e0e0e0;
+	-webkit-box-shadow: 2px 2px 19px #e0e0e0;
+	-moz-box-shadow: 2px 2px 19px #e0e0e0;
+	-moz-border-radius:8px;
+	border-radius:8px;
+	opacity:0.8;
+	filter:alpha(opacity=80);
+	cursor:move;
+	background-color:white;
+	font-size:11px;
+	-webkit-transition:background-color 0.25s ease-in;
+	-moz-transition:background-color 0.25s ease-in;
+	transition:background-color 0.25s ease-in;	
+}
+
+.w:hover {
+	background-color: #5c96bc;
+	color:white;
+	z-index:10000;
+}
+
+.aLabel {
+	-webkit-transition:background-color 0.25s ease-in;
+	-moz-transition:background-color 0.25s ease-in;
+	transition:background-color 0.25s ease-in;
+}
+
+.aLabel._jsPlumb_hover, ._jsPlumb_source_hover, ._jsPlumb_target_hover {
+	background-color:#1e8151;
+	color:white;
+}
+
+.aLabel {
+	background-color:white;
+	opacity:0.8;
+	padding:0.3em;				
+	border-radius:0.5em;
+	border:1px solid #346789;
+	cursor:pointer;
+	z-index:10;
+}
+
+.aLabel2{
+	opacity:0;
+	transition:opacity 0.25s ease-in;*
+	padding:0.3em;				
+	z-index:9;
+	margin-top: 19px;
+	background-color:white;
+
+	padding:0.3em;				
+	border-radius:0.5em;
+	border:1px solid #346789;
+}
+
+.aLabel:hover + .aLabel2 {
+	opacity:0.8;
+}
+
+.aLabel:hover + div + .aLabel2 {
+	opacity:0.8;
+}
+
+.aLabel2:hover{
+	opacity:0.8;
+}
+
+.joinLabel{
+	display:none;
+}
+
+.ep {
+	position:absolute;
+	bottom: 4px;
+	left: 46%;
+	width:1em;
+	height:1em;
+	background-color:orange;
+	cursor:pointer;
+	box-shadow: 0px 0px 2px black;
+	-webkit-transition:-webkit-box-shadow 0.25s ease-in;
+	-moz-transition:-moz-box-shadow 0.25s ease-in;
+	transition:box-shadow 0.25s ease-in;
+}
+
+.ep:hover {
+	box-shadow: 0px 0px 6px black;
+}
+
+.dragHover { border:2px solid orange; }
+
+path { cursor:pointer; }
+
+
+/*drop down css */
+.dropit {
+    list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.dropit .dropit-trigger { position: relative; }
+.dropit .dropit-submenu {
+    position: absolute;
+    top: 100%;
+    left: 0; /* dropdown left or right */
+    z-index: 1000;
+    display: none;
+    min-width: 150px;
+    list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.dropit .dropit-open .dropit-submenu { display: block; }
+
+.ddmenu ul { display: none; } /* Hide before plugin loads */
+.ddmenu ul.dropit-submenu {
+    background-color: #fff;
+    border: 1px solid #b2b2b2;
+    padding: 6px 0;
+    margin: 3px 0 0 1px;
+    -webkit-border-radius: 3px;
+       -moz-border-radius: 3px;
+            border-radius: 3px;
+    -webkit-box-shadow: 0px 1px 3px rgba(0,0,0,0.15);
+       -moz-box-shadow: 0px 1px 3px rgba(0,0,0,0.15);
+            box-shadow: 0px 1px 3px rgba(0,0,0,0.15);
+}          
+.ddmenu ul.dropit-submenu a {
+display: block;
+font-size: 12px;
+line-height: 25px;
+color: #7a868e;
+padding: 0 12px;
+}
+.ddmenu ul.dropit-submenu a:hover {
+    background: #248fc1;
+    color: #fff;
+    text-decoration: none;
+}
+
+.ui-layout-toggler {
+background-image: url(drag-handle.png);
+}
+
+.ui-layout-toggler-closed {
+background-image: url(drag-handlesm.png);
+}
+
+.colmenuLink {
+display: inline-block;
+float: right;
+margin-top: -15px;
+margin-right: -7px;
+}
+
+/* 
+ * dragtable
+ *
+ * @Version 1.0.3
+ *
+ * default css
+ *
+ */
+
+
+.dragtable-drag-handle{
+cursor: move;
+display: inline-block;
+width: 20px;
+height: 23px;
+float: left;
+background-image: url(drag-handle.png);
+background-repeat: repeat-y;
+position: absolute;
+margin: -5px;
+margin-left: -11px;
+}
+.dragtable-drag-handle:hover{
+background-image: url(drag-handle-active.png);
+}
+/*
+ * gets wrapped around placeholder table
+ */
+  
+.dragtable-drag-wrapper{
+	position: absolute;
+    z-index: 1000;
+} 
+ /*
+  * this gets applied to the table copy of the col that we are dragging 
+  */ 
+.dragtable-drag-wrapper .dragtable-drag-col{
+    opacity: 0.7;
+    filter: alpha(opacity=70);
+    cursor:move;
+}
+
+/*
+	placeholder is just a name for the real table col
+*/
+.dragtable-col-placeholder { 
+    border-left: 1px dotted black;
+    border-right: 1px dotted black; 
+    color:#EFEFEF;
+    background: #EFEFEF !important; 
+    visibility: visible !important;
+}
+table .dragtable-col-placeholder:first{
+	border-top:1px dotted black;
+}
+
+
+.dragtable-col-placeholder * { 
+    opacity: 0.0; 
+    visibility: hidden; 
+}
+
+table.tablesorter thead tr th, table.tablesorter tfoot tr th {
+padding-left: 10px;
+position: relative;
+}
+
+.colddmenu{
+    display:none;
+    position:absolute;
+    list-style: none;
+    margin:0;
+    z-index:9999;
+	width: 125px;
+	top: 0px;
+	left: 0px;
+}
+
+.menugrp {
+display: block;
+position: absolute;
+top: 1px;
+/* float: right; */
+right: 0px;
+}

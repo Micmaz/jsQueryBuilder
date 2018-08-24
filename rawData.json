@@ -1,0 +1,18 @@
+{
+		"columns":[
+			{"name":"id","type":"int"},
+			{"name":"username","type":"string"},
+			{"name":"fname","type":"string"},
+			{"name":"lname","type":"string"},
+			{"name":"dept_id","type":"int"},
+			{"name":"dateCreated","type":"date"}
+		],
+		"rows":[
+            {"id":29,"username":"peter_parker","fname":"peter","lname":"parker","dept_id":2,"dateCreated":"jul 6, 2006 8:14 am"},
+            {"id":33,"username":"john_hood","fname":"john","lname":"hood","dept_id":2,"dateCreated":"dec 10, 2002 5:14 am"},
+            {"id":18,"username":"clark_kent","fname":"clark","lname":"kent","dept_id":2,"dateCreated":"jan 12, 2003 11:14 am"},
+            {"id":45,"username":"bruce_almighty","fname":"bruce","lname":"almighty","dept_id":2,"dateCreated":"jan 18, 2001 9:12 am"},
+            {"id":22,"username":"bruce_evans","fname":"bruce","lname":"evans","dept_id":2,"dateCreated":"jan 18, 2007 9:12 am"}
+		]
+}
+
